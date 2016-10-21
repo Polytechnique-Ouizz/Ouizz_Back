@@ -1,5 +1,8 @@
 class EventsController < ApplicationController
-  before_action :set_event, only: [:show, :edit, :update, :destroy]
+  before_action :set_event, only: [:show, :edit, :update, :destroy, :book]
+
+#On saute une étape de sécurité si on appelle BOOK en JSON
+skip_before_action :verify_authenticity_token, only: [:book]
 
   # GET /events
   # GET /events.json
@@ -61,6 +64,23 @@ class EventsController < ApplicationController
     end
   end
 
+# POST /events/1/book.json
+  def book
+    # On crée un nouvel objet booking à partir des paramètres reçus
+    @booking = Booking.new(booking_params)
+    # On précise que cet object Booking dépend du show concerné
+    @booking.event = @event
+    #@booking.ouizzuser = @ouizzuser
+
+    respond_to do |format|
+      if @booking.save
+        format.json
+      else
+        format.json { render json: @booking.errors, status: :unprocessable_entity }
+      end
+    end
+  end
+
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_event
@@ -71,4 +91,10 @@ class EventsController < ApplicationController
     def event_params
       params.require(:event).permit(:user, :name, :location, :date, :time, :description, :capacity, :price, :image)
     end
+
+    # On ajoute les paramètres qu'on va envoyer avec le booking
+    def booking_params
+      params.require(:booking).permit(:ouizzuser)
+    end
+
 end
